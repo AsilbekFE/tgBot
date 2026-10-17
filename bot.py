@@ -39,12 +39,19 @@ import db
 load_dotenv()
 
 # Konfiguratsiya
-TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
-GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
-OWNER_ID = int(os.environ["OWNER_ID"])
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+OWNER_ID = int(os.getenv("OWNER_ID", "8551800192"))
 MODEL = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
-WEBAPP_URL = os.getenv("WEBAPP_URL", "http://10.144.34.77:8000").rstrip("/")
+WEBAPP_URL = (
+    os.getenv("WEBAPP_URL")
+    or os.getenv("RENDER_EXTERNAL_URL")
+    or "http://10.144.34.77:8000"
+).rstrip("/")
 PORT = int(os.getenv("PORT", "8000"))
+
+if not TELEGRAM_TOKEN:
+    raise ValueError("TELEGRAM_TOKEN o'zgaruvchisi kiritilmadi! Render yoki .env da sozlang.")
 
 BASE_DIR = Path(__file__).parent
 STATIC_DIR = BASE_DIR / "static"
@@ -441,6 +448,11 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
 
+@app.get("/health")
+async def health_check():
+    return {"status": "ok", "app": "Premium Kinolar"}
+
+
 # Sahifalar
 @app.get("/")
 @app.get("/user")
@@ -574,8 +586,9 @@ async def create_stars_invoice(req: Request):
 
 
 def main():
-    log.info(f"Premium Kinolar serveri {PORT}-portda ishga tushmoqda...")
-    uvicorn.run("bot:app", host="0.0.0.0", port=PORT, reload=False)
+    listen_port = int(os.getenv("PORT", PORT))
+    log.info(f"Premium Kinolar serveri {listen_port}-portda ishga tushmoqda...")
+    uvicorn.run("bot:app", host="0.0.0.0", port=listen_port, reload=False)
 
 
 if __name__ == "__main__":
