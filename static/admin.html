@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Admin Panel — Premium Kinolar</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="#" class="brand">
+      <div class="brand-icon">👑</div>
+      <span>PREMIUM KINOLAR — ADMIN</span>
+    </a>
+    <div class="user-status-pill status-active">
+      <div class="status-dot"></div>
+      <span>Asosiy Admin</span>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Admin Tabs -->
+    <div class="admin-tabs" style="margin-top: 16px;">
+      <button class="tab-btn active" id="tabMoviesBtn" onclick="switchTab('movies')">🍿 Kinolar boshqaruvi</button>
+      <button class="tab-btn" id="tabUsersBtn" onclick="switchTab('users')">👥 Foydalanuvchilar (Obunachilar)</button>
+    </div>
+
+    <!-- TAB 1: MOVIES -->
+    <div id="moviesTabSection">
+      <!-- Add Movie Card -->
+      <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 28px;">
+        <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+          ➕ Yangi kino qo'shish (Fayl yuklash)
+        </h2>
+
+        <form id="addMovieForm" onsubmit="handleAddMovie(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Kino nomi *</label>
+              <input type="text" id="movieTitle" class="form-input" placeholder="Masalan: Forsaj 10" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Kino kodi * (Raqamli kod)</label>
+              <input type="text" id="movieCode" class="form-input" placeholder="Masalan: 104" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Kino tavsifi (Janr, yil, qisqacha mazmun) *</label>
+            <textarea id="movieDesc" class="form-input" rows="3" placeholder="Kino haqida qisqacha ma'lumot yozing..." required style="resize: vertical;"></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">🎬 Kino video fayli * (URL kerakmas)</label>
+              <input type="file" id="movieVideoFile" class="form-input" accept="video/*" required style="padding: 9px 12px; cursor: pointer;">
+              <small style="color: var(--text-dim); font-size: 0.75rem;">(Telefoningiz yoki kompyuteringizdan video faylni tanlang: MP4, MKV, AVI)</small>
+            </div>
+            <div class="form-group">
+              <label class="form-label">🖼 Kino posteri (Rasm fayli tanlash)</label>
+              <input type="file" id="moviePosterFile" class="form-input" accept="image/*" style="padding: 9px 12px; cursor: pointer;">
+              <small style="color: var(--text-dim); font-size: 0.75rem;">(Ixtiyoriy rasm tanlang yoki bo'sh qoldiring)</small>
+            </div>
+          </div>
+
+          <!-- Upload Progress Bar -->
+          <div id="uploadProgressBox" style="display: none; margin: 16px 0;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 6px;">
+              <span id="uploadStatusText">Video fayl serverga yuklanmoqda... ⏳</span>
+              <span id="uploadPercentText" style="font-weight: 700; color: var(--accent-green);">0%</span>
+            </div>
+            <div style="width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 6px; overflow: hidden;">
+              <div id="uploadProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #e50914, #10b981); transition: width 0.15s ease;"></div>
+            </div>
+          </div>
+
+          <button type="submit" id="addMovieSubmitBtn" class="btn-primary" style="margin-top: 10px; width: 100%; justify-content: center;">
+            💾 Video faylni yuklash va kinoni e'lon qilish
+          </button>
+        </form>
+      </div>
+
+      <!-- Movies List -->
+      <div class="section-header">
+        <h3 class="section-title">🎬 Mavjud kinolar ro'yxati</h3>
+        <span id="adminMovieCount" style="color: var(--text-dim); font-size: 0.85rem;">0 ta kino</span>
+      </div>
+
+      <div id="adminMoviesList" class="movie-grid">
+        <!-- Dinamik chiqadi -->
+      </div>
+    </div>
+
+    <!-- TAB 2: USERS -->
+    <div id="usersTabSection" style="display: none;">
+      <div class="section-header">
+        <h3 class="section-title">👥 Ro'yxatdan o'tganlar va Obunachilar</h3>
+        <button class="btn-secondary" onclick="loadAdminUsers()">🔄 Yangilash</button>
+      </div>
+
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">
+        Bu yerdan obuna sotib olgan foydalanuvchilarni ko'rishingiz va istalgan foydalanuvchini <strong>Aktiv (Active)</strong> yoki <strong>Nofaol (Deactive)</strong> qilishingiz mumkin.
+      </p>
+
+      <div class="table-responsive">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Foydalanuvchi</th>
+              <th>Username</th>
+              <th>Holati</th>
+              <th>Sana</th>
+              <th>Amallar</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody">
+            <!-- Dinamik chiqadi -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let adminMovies = [];
+    let adminUsers = [];
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      if (window.Telegram && window.Telegram.WebApp) {
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
+      }
+      await loadAdminMovies();
+      await loadAdminUsers();
+    });
+
+    function switchTab(tab) {
+      const moviesTab = document.getElementById('moviesTabSection');
+      const usersTab = document.getElementById('usersTabSection');
+      const tabMoviesBtn = document.getElementById('tabMoviesBtn');
+      const tabUsersBtn = document.getElementById('tabUsersBtn');
+
+      if (tab === 'movies') {
+        moviesTab.style.display = 'block';
+        usersTab.style.display = 'none';
+        tabMoviesBtn.classList.add('active');
+        tabUsersBtn.classList.remove('active');
+      } else {
+        moviesTab.style.display = 'none';
+        usersTab.style.display = 'block';
+        tabMoviesBtn.classList.remove('active');
+        tabUsersBtn.classList.add('active');
+        loadAdminUsers();
+      }
+    }
+
+    async function loadAdminMovies() {
+      try {
+        const res = await fetch('/api/movies');
+        adminMovies = await res.json();
+        renderAdminMovies();
+      } catch (e) {
+        console.error("Kinolar yuklanmadi:", e);
+      }
+    }
+
+    function renderAdminMovies() {
+      const container = document.getElementById('adminMoviesList');
+      document.getElementById('adminMovieCount').innerText = `${adminMovies.length} ta kino`;
+
+      if (adminMovies.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-dim); text-align: center; grid-column: 1/-1; padding: 30px;">Hali birorta kino qo‘shilmagan.</div>';
+        return;
+      }
+
+      container.innerHTML = adminMovies.map(m => {
+        let fileInfo = '';
+        if (m.video_file) {
+          fileInfo = '📁 Video fayli serverda saqlangan';
+        } else if (m.telegram_file_id) {
+          fileInfo = '⚡ Telegram video fayli ulangan';
+        } else if (m.video_url) {
+          fileInfo = '🌐 URL orqali';
+        }
+
+        return `
+          <div class="movie-card">
+            <div class="movie-poster-wrapper">
+              <img src="${m.poster_url || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600'}" alt="${m.title}" class="movie-poster" onerror="this.src='https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600'">
+              <div class="movie-code-badge">🔑 Kod: #${m.code}</div>
+            </div>
+            <div class="movie-info">
+              <h3 class="movie-title">${m.title}</h3>
+              <p class="movie-desc">${m.description}</p>
+              <div style="font-size: 0.75rem; color: var(--accent-gold); margin-bottom: 12px;">
+                ${fileInfo}
+              </div>
+              <div class="movie-actions">
+                <button class="btn-secondary" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3); width: 100%; justify-content: center;" onclick="deleteMovie('${m.id}')">
+                  🗑 O'chirish
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function handleAddMovie(e) {
+      e.preventDefault();
+      const title = document.getElementById('movieTitle').value;
+      const code = document.getElementById('movieCode').value;
+      const description = document.getElementById('movieDesc').value;
+      const videoFileInput = document.getElementById('movieVideoFile');
+      const posterFileInput = document.getElementById('moviePosterFile');
+
+      if (!videoFileInput.files || videoFileInput.files.length === 0) {
+        alert("Iltimos, video faylni tanlang!");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('code', code);
+      formData.append('description', description);
+      formData.append('video_file', videoFileInput.files[0]);
+
+      if (posterFileInput.files && posterFileInput.files.length > 0) {
+        formData.append('poster_file', posterFileInput.files[0]);
+      }
+
+      const btn = document.getElementById('addMovieSubmitBtn');
+      const progressBox = document.getElementById('uploadProgressBox');
+      const progressBar = document.getElementById('uploadProgressBar');
+      const percentText = document.getElementById('uploadPercentText');
+      const statusText = document.getElementById('uploadStatusText');
+
+      btn.disabled = true;
+      btn.innerText = "Yuklanmoqda... ⏳";
+      progressBox.style.display = 'block';
+      progressBar.style.width = '0%';
+      percentText.innerText = '0%';
+      statusText.innerText = "Video fayl yuklanmoqda... ⏳";
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/movies');
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          progressBar.style.width = percent + '%';
+          percentText.innerText = percent + '%';
+          if (percent === 100) {
+            statusText.innerText = "Serverda qayta ishlanmoqda... ⚙️";
+          }
+        }
+      };
+
+      xhr.onload = async () => {
+        btn.disabled = false;
+        btn.innerText = "💾 Video faylni yuklash va kinoni e'lon qilish";
+
+        if (xhr.status >= 200 && xhr.status < 300) {
+          alert("🎉 Kino video fayli muvaffaqiyatli yuklandi va e'lon qilindi!");
+          document.getElementById('addMovieForm').reset();
+          progressBox.style.display = 'none';
+          await loadAdminMovies();
+        } else {
+          try {
+            const err = JSON.parse(xhr.responseText);
+            alert("Xatolik: " + (err.detail || "Fayl yuklanmadi"));
+          } catch (_) {
+            alert("Yuklashda xatolik yuz berdi.");
+          }
+        }
+      };
+
+      xhr.onerror = () => {
+        btn.disabled = false;
+        btn.innerText = "💾 Video faylni yuklash va kinoni e'lon qilish";
+        progressBox.style.display = 'none';
+        alert("Server bilan aloqa uzildi.");
+      };
+
+      xhr.send(formData);
+    }
+
+    async function deleteMovie(id) {
+      if (!confirm("Haqiqatan ham bu kinoni o'chirmoqchimisiz?")) return;
+      try {
+        const res = await fetch(`/api/movies/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          await loadAdminMovies();
+        } else {
+          alert("O'chirishda xatolik");
+        }
+      } catch (e) {
+        alert("Xatolik yuz berdi");
+      }
+    }
+
+    // --- USERS MANAGEMENT ---
+    async function loadAdminUsers() {
+      try {
+        const res = await fetch('/api/users');
+        adminUsers = await res.json();
+        renderAdminUsers();
+      } catch (e) {
+        console.error("Foydalanuvchilar yuklanmadi:", e);
+      }
+    }
+
+    function renderAdminUsers() {
+      const tbody = document.getElementById('usersTableBody');
+      if (adminUsers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-dim); padding: 20px;">Hech qanday foydalanuvchi yo‘q</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = adminUsers.map(u => {
+        const isActive = u.status === 'active' || u.is_premium;
+        const statusBadge = isActive 
+          ? '<span class="badge-active">Faol (Active) ✅</span>' 
+          : '<span class="badge-inactive">Nofaol ❌</span>';
+
+        const toggleBtn = isActive
+          ? `<button class="toggle-btn toggle-deactivate" onclick="toggleUser(${u.id})">Deaktiv qilish ⏸</button>`
+          : `<button class="toggle-btn toggle-activate" onclick="toggleUser(${u.id})">Aktiv qilish ▶️</button>`;
+
+        const isOwner = u.id === 8551800192;
+
+        return `
+          <tr>
+            <td><code>${u.id}</code></td>
+            <td><strong>${u.first_name || 'Noma\'lum'} ${u.last_name || ''}</strong> ${isOwner ? '👑' : ''}</td>
+            <td>${u.username ? '@' + u.username : '—'}</td>
+            <td>${statusBadge}</td>
+            <td><small style="color: var(--text-dim);">${u.registered_at || '—'}</small></td>
+            <td>
+              ${isOwner ? '<small style="color: var(--accent-gold);">Asosiy Ega</small>' : toggleBtn}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function toggleUser(userId) {
+      try {
+        const res = await fetch(`/api/users/${userId}/toggle`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) {
+          await loadAdminUsers();
+        } else {
+          alert("Xatolik: " + (data.detail || "O'zgartirilmadi"));
+        }
+      } catch (e) {
+        alert("Xatolik yuz berdi");
+      }
+    }
+  </script>
+</body>
+</html>

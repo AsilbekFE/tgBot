@@ -1,0 +1,44 @@
+[
+  {
+    "id": 8551800192,
+    "first_name": "Asilbek",
+    "last_name": "Sadullayev",
+    "username": "asl_o_1",
+    "is_admin": true,
+    "is_premium": true,
+    "status": "active",
+    "registered_at": "2026-10-16 22:40"
+  },
+  {
+    "id": 6134994745,
+    "first_name": "Munira",
+    "last_name": "Nazarova",
+    "username": "Admen_on",
+    "is_admin": false,
+    "is_premium": false,
+    "status": "inactive",
+    "registered_at": "2026-10-17 00:04",
+    "paid_at": "2026-10-17 00:05",
+    "card_last4": "5555"
+  },
+  {
+    "id": 8679491064,
+    "first_name": "𝑨𝒇𝒓𝒖𝒛",
+    "last_name": "",
+    "username": "Afruz0886",
+    "is_admin": false,
+    "is_premium": false,
+    "status": "inactive",
+    "registered_at": "2026-10-17 17:09"
+  },
+  {
+    "id": 6185712670,
+    "first_name": "f",
+    "last_name": "",
+    "username": "sociaIangel",
+    "is_admin": false,
+    "is_premium": false,
+    "status": "inactive",
+    "registered_at": "2026-10-17 17:09"
+  }
+]

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Premium Kinolar — Filmlar & Obuna</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="#" class="brand">
+      <div class="brand-icon">🎬</div>
+      <span>PREMIUM KINOLAR</span>
+    </a>
+    <div id="userStatusPill" class="user-status-pill status-inactive">
+      <div class="status-dot"></div>
+      <span id="userStatusText">Obuna: Faol emas</span>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Hero Banner -->
+    <div class="hero-banner">
+      <div class="hero-content">
+        <h1>Eng sara premyera kinolar</h1>
+        <p>Premium obuna orqali barcha filmlar kodlarini oling va Telegram bot orqali bir zumda tomosha qiling!</p>
+        <button id="openSubscribeBtn" class="btn-primary" onclick="openPaymentModal()">
+          ⭐️ Obuna bo'lish (50 ⭐️ Stars)
+        </button>
+      </div>
+    </div>
+
+    <!-- Search Box -->
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" class="search-input" placeholder="Kino nomi yoki kodi bo'yicha qidirish..." oninput="filterMovies()">
+    </div>
+
+    <!-- Section Header -->
+    <div class="section-header">
+      <h2 class="section-title">🍿 Barcha Filmlar</h2>
+      <span id="movieCount" style="color: var(--text-dim); font-size: 0.9rem;">3 ta film</span>
+    </div>
+
+    <!-- Movies Grid -->
+    <div id="movieGrid" class="movie-grid">
+      <!-- Dinamik yuklanadi -->
+    </div>
+  </div>
+
+  <!-- Payment Modal -->
+  <div id="paymentModal" class="modal-overlay">
+    <div class="modal-content" style="text-align: center; max-width: 420px;">
+      <button class="modal-close" onclick="closePaymentModal()">&times;</button>
+      
+      <div style="font-size: 3.5rem; margin-bottom: 6px;">⭐️</div>
+      <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 6px;">Telegram Stars Obuna</h2>
+      <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 20px;">
+        1 oylik cheksiz Premium obuna orqali barcha filmlar kodlarini oching va botda darhol tomosha qiling!
+      </p>
+
+      <!-- Price Card -->
+      <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 16px; padding: 18px; margin-bottom: 22px;">
+        <div style="font-size: 0.8rem; color: #f59e0b; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Obuna Narxi</div>
+        <div style="font-size: 2.2rem; font-weight: 900; color: #fff; margin: 4px 0;">50 ⭐️</div>
+        <div style="font-size: 0.8rem; color: #94a3b8;">(1 oy davomida barcha filmlar ochiq)</div>
+      </div>
+
+      <!-- Action Button 1: Direct Stars Pay -->
+      <button type="button" id="starsPayBtn" class="btn-primary" style="background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5); width: 100%; justify-content: center; font-size: 1.05rem; padding: 14px 20px; font-weight: 800; border: none; cursor: pointer;" onclick="payWithTelegramStars()">
+        ⭐️ Telegramda To'lash (50 ⭐️)
+      </button>
+
+      <!-- Action Link 2: Open in Bot directly -->
+      <div style="margin-top: 14px;">
+        <a id="starsDirectLink" href="https://t.me/My_agentcha_bot?start=buy" class="btn-secondary" style="width: 100%; justify-content: center; font-size: 0.88rem;">
+          🤖 Bot orqali to'lov chekini ochish
+        </a>
+      </div>
+
+      <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 16px;">
+        🔒 To'lov to'g'ridan-to'g'ri rasmiy Telegram tizimi orqali amalga oshiriladi.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const BOT_USERNAME = "My_agentcha_bot";
+    let allMovies = [];
+    let currentUser = {
+      id: null,
+      is_premium: false,
+      status: 'inactive'
+    };
+
+    // Telegram WebApp orqali user ID aniqlash
+    window.addEventListener('DOMContentLoaded', async () => {
+      // 1. Telegram WebApp ichida bo'lsa
+      if (window.Telegram && window.Telegram.WebApp) {
+        try {
+          Telegram.WebApp.ready();
+          Telegram.WebApp.expand();
+        } catch (e) {}
+
+        const tgUser = Telegram.WebApp.initDataUnsafe?.user;
+        if (tgUser && tgUser.id) {
+          currentUser.id = tgUser.id;
+          currentUser.first_name = tgUser.first_name;
+          localStorage.setItem('kino_user_id', tgUser.id);
+        }
+      }
+
+      // 2. Agar URL paramda ?user_id= bo'lsa
+      const urlParams = new URLSearchParams(window.location.search);
+      const paramUserId = urlParams.get('user_id');
+      if (paramUserId) {
+        currentUser.id = parseInt(paramUserId);
+        localStorage.setItem('kino_user_id', paramUserId);
+      }
+
+      // 3. Agar hali topilmagan bo'lsa localStorage tekshirish
+      if (!currentUser.id) {
+        const savedId = localStorage.getItem('kino_user_id');
+        if (savedId) {
+          currentUser.id = parseInt(savedId);
+        }
+      }
+
+      // User statusini tekshirish
+      if (currentUser.id) {
+        await checkUserStatus(currentUser.id);
+      }
+
+      await loadMovies();
+    });
+
+    async function checkUserStatus(userId) {
+      try {
+        const res = await fetch(`/api/me?user_id=${userId}`);
+        const data = await res.json();
+        currentUser = data;
+        updateUserUI();
+      } catch (e) {
+        console.error("Status olishda xato:", e);
+      }
+    }
+
+    function updateUserUI() {
+      const pill = document.getElementById('userStatusPill');
+      const text = document.getElementById('userStatusText');
+      const heroBtn = document.getElementById('openSubscribeBtn');
+
+      if (currentUser.is_premium || currentUser.status === 'active') {
+        pill.className = 'user-status-pill status-active';
+        text.innerText = 'Obuna: Faol ✅';
+        if (heroBtn) {
+          heroBtn.style.display = 'none';
+        }
+      } else {
+        pill.className = 'user-status-pill status-inactive';
+        text.innerText = 'Obuna: Faol emas ❌';
+        if (heroBtn) {
+          heroBtn.style.display = 'inline-flex';
+        }
+      }
+    }
+
+    async function loadMovies() {
+      try {
+        const res = await fetch('/api/movies');
+        allMovies = await res.json();
+        renderMovies(allMovies);
+      } catch (e) {
+        console.error("Kinolar yuklanmadi:", e);
+      }
+    }
+
+    function renderMovies(movies) {
+      const grid = document.getElementById('movieGrid');
+      document.getElementById('movieCount').innerText = `${movies.length} ta film`;
+
+      if (movies.length === 0) {
+        grid.innerHTML = '<div style="color: var(--text-dim); text-align: center; grid-column: 1/-1; padding: 40px;">Hech qanday kino topilmadi.</div>';
+        return;
+      }
+
+      const isSubscribed = currentUser.is_premium || currentUser.status === 'active';
+
+      grid.innerHTML = movies.map(m => {
+        let actionBtn = '';
+        let codeBadge = '';
+
+        if (isSubscribed) {
+          codeBadge = `<div class="movie-code-badge">🔑 Kod: #${m.code}</div>`;
+          actionBtn = `
+            <a href="https://t.me/${BOT_USERNAME}?start=movie_${m.code}" target="_blank" class="btn-watch">
+              ▶️ Botda ko'rish
+            </a>
+          `;
+        } else {
+          codeBadge = `<div class="movie-code-badge" style="color: #94a3b8; border-color: rgba(255,255,255,0.1);">🔒 Kod yopiq</div>`;
+          actionBtn = `
+            <button class="btn-locked" onclick="openPaymentModal()">
+              🔒 Kodni ochish (Obuna)
+            </button>
+          `;
+        }
+
+        return `
+          <div class="movie-card">
+            <div class="movie-poster-wrapper">
+              <img src="${m.poster_url}" alt="${m.title}" class="movie-poster" onerror="this.src='https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600'">
+              ${codeBadge}
+              <div class="quality-badge">HD</div>
+            </div>
+            <div class="movie-info">
+              <h3 class="movie-title">${m.title}</h3>
+              <p class="movie-desc">${m.description}</p>
+              <div class="movie-actions">
+                ${actionBtn}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterMovies() {
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+      const filtered = allMovies.filter(m => 
+        m.title.toLowerCase().includes(query) || 
+        String(m.code).includes(query) ||
+        m.description.toLowerCase().includes(query)
+      );
+      renderMovies(filtered);
+    }
+
+    // Modal funksiyalari
+    function openPaymentModal() {
+      document.getElementById('paymentModal').classList.add('active');
+    }
+
+    function closePaymentModal() {
+      document.getElementById('paymentModal').classList.remove('active');
+    }
+
+    async function payWithTelegramStars() {
+      const btn = document.getElementById('starsPayBtn');
+      btn.disabled = true;
+      btn.innerText = "To'lov tayyorlanmoqda... ⏳";
+
+      let userId = currentUser.id;
+      if (!userId) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const paramId = urlParams.get('user_id');
+        if (paramId) userId = parseInt(paramId);
+      }
+      if (!userId) {
+        const savedId = localStorage.getItem('kino_user_id');
+        if (savedId) userId = parseInt(savedId);
+      }
+
+      // Agar user_id umuman topilmasa, to'g'ridan-to'g'ri botga deep-link bilan yo'naltiramiz
+      if (!userId) {
+        btn.disabled = false;
+        btn.innerText = "⭐️ Telegramda To'lash (50 ⭐️)";
+        window.location.href = `https://t.me/${BOT_USERNAME}?start=buy`;
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/create-stars-invoice', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ user_id: parseInt(userId) })
+        });
+        const data = await res.json();
+        
+        if (data.ok && data.invoice_link) {
+          const directLink = document.getElementById('starsDirectLink');
+          if (directLink) {
+            directLink.href = data.invoice_link;
+          }
+
+          // 1. Agar Telegram WebApp ichida bo'lsa
+          const isRealTelegram = Boolean(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData);
+          if (isRealTelegram && typeof Telegram.WebApp.openInvoice === 'function') {
+            Telegram.WebApp.openInvoice(data.invoice_link, function(status) {
+              if (status === 'paid') {
+                alert("🎉 To'lov muvaffaqiyatli qabul qilindi! Obunangiz faollashtirildi.");
+                location.reload();
+              }
+            });
+            btn.disabled = false;
+            btn.innerText = "⭐️ Telegramda To'lash (50 ⭐️)";
+            return;
+          }
+
+          // 2. Oddiy brauzerda (Chrome, Safari va h.k.)
+          window.location.href = data.invoice_link;
+        } else {
+          // Xatolik bo'lsa bot orqali ochish
+          window.location.href = `https://t.me/${BOT_USERNAME}?start=buy`;
+        }
+      } catch (e) {
+        console.error("To'lov xatosi:", e);
+        window.location.href = `https://t.me/${BOT_USERNAME}?start=buy`;
+      } finally {
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.innerText = "⭐️ Telegramda To'lash (50 ⭐️)";
+        }, 2000);
+      }
+    }
+  </script>
+</body>
+</html>

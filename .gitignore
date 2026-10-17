@@ -1,0 +1,26 @@
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Large media uploads (don't push big videos to GitHub)
+uploads/videos/*
+!uploads/videos/.gitkeep
+uploads/posters/*
+!uploads/posters/.gitkeep
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

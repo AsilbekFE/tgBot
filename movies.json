@@ -1,0 +1,40 @@
+[
+  {
+    "id": "m_01_1792176833",
+    "code": "01",
+    "title": "edit",
+    "description": "vau",
+    "poster_url": "/uploads/posters/01_103856.jpg",
+    "video_url": "",
+    "video_file": "C:\\Users\\Furb-X\\OneDrive\\Desktop\\lll\\uploads\\videos\\01_103856.mp4",
+    "telegram_file_id": "BAACAgIAAxkDAAMVatJzBaY5cQ36Fn2hY-vBiEo3aSgAArawAALcQ5FKPMl7_fMVKa09BA",
+    "created_at": "2026-10-16 23:53"
+  },
+  {
+    "id": "m_101",
+    "code": "101",
+    "title": "Forsaj 10 (Fast X)",
+    "description": "Dom Toretto va uning oilasi bu safar Dante Reyesga qarshi eng xavfli jangga kirishadi. Jangari, poyga va sarguzasht.",
+    "poster_url": "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600",
+    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    "created_at": "2026-10-16 23:00"
+  },
+  {
+    "id": "m_102",
+    "code": "102",
+    "title": "Avatar 2: Suv Yo'li",
+    "description": "Jeyk Salli va Neytiri Pandoraning yangi okean xalqlari bilan birlashib, insonlar bosqiniga qarshi kurashadilar.",
+    "poster_url": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600",
+    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+    "created_at": "2026-10-16 23:05"
+  },
+  {
+    "id": "m_103",
+    "code": "103",
+    "title": "Qasoskorlar: Intiho",
+    "description": "Tanos koinot aholisining yarmini yo'q qilgandan so'ng, qolgan Qasoskorlar vaqt bo'ylab sayohat qilishadi.",
+    "poster_url": "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600",
+    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    "created_at": "2026-10-16 23:10"
+  }
+]
