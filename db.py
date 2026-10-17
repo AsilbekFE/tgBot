@@ -8,7 +8,16 @@ log = logging.getLogger("movie-db")
 BASE_DIR = Path(__file__).parent
 MOVIES_FILE = BASE_DIR / "movies.json"
 USERS_FILE = BASE_DIR / "users.json"
+ADMIN_IDS = [8551800192, 8679491064]
 OWNER_ID = 8551800192
+
+
+def is_admin(user_id: int) -> bool:
+    try:
+        return int(user_id) in ADMIN_IDS
+    except Exception:
+        return False
+
 
 # Standart dastlabki kinolar
 INITIAL_MOVIES = [
@@ -43,7 +52,7 @@ INITIAL_MOVIES = [
 
 INITIAL_USERS = [
     {
-        "id": OWNER_ID,
+        "id": 8551800192,
         "first_name": "Asilbek",
         "last_name": "Sadullayev",
         "username": "asl_o_1",
@@ -51,7 +60,17 @@ INITIAL_USERS = [
         "is_premium": True,
         "status": "active",
         "registered_at": "2026-10-16 22:40",
-    }
+    },
+    {
+        "id": 8679491064,
+        "first_name": "Afruz",
+        "last_name": "",
+        "username": "Afruz0886",
+        "is_admin": True,
+        "is_premium": True,
+        "status": "active",
+        "registered_at": "2026-10-17 17:09",
+    },
 ]
 
 
@@ -141,17 +160,33 @@ def load_users() -> list[dict]:
     try:
         with open(USERS_FILE, "r", encoding="utf-8") as f:
             users = json.load(f)
-            # Owner har doim admin va active
-            owner_found = False
-            for u in users:
-                if u.get("id") == OWNER_ID:
-                    u["is_admin"] = True
-                    u["is_premium"] = True
-                    u["status"] = "active"
-                    owner_found = True
-                    break
-            if not owner_found:
-                users.insert(0, INITIAL_USERS[0])
+            # Adminlar har doim admin va active
+            changed = False
+            for aid in ADMIN_IDS:
+                found = False
+                for u in users:
+                    if u.get("id") == aid:
+                        if not u.get("is_admin") or not u.get("is_premium") or u.get("status") != "active":
+                            u["is_admin"] = True
+                            u["is_premium"] = True
+                            u["status"] = "active"
+                            changed = True
+                        found = True
+                        break
+                if not found:
+                    default_u = next((x for x in INITIAL_USERS if x["id"] == aid), {
+                        "id": aid,
+                        "first_name": f"Admin ({aid})",
+                        "last_name": "",
+                        "username": "",
+                        "is_admin": True,
+                        "is_premium": True,
+                        "status": "active",
+                        "registered_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                    })
+                    users.insert(0, default_u)
+                    changed = True
+            if changed:
                 save_users(users)
             return users
     except Exception:
@@ -185,17 +220,22 @@ def register_or_get_user(user_id: int, first_name: str = "", last_name: str = ""
                 u["last_name"] = last_name
             if username:
                 u["username"] = username
+            if is_admin(user_id):
+                u["is_admin"] = True
+                u["is_premium"] = True
+                u["status"] = "active"
             save_users(users)
             return u
 
+    user_admin = is_admin(user_id)
     new_user = {
         "id": user_id,
         "first_name": first_name or "Foydalanuvchi",
         "last_name": last_name or "",
         "username": username or "",
-        "is_admin": user_id == OWNER_ID,
-        "is_premium": user_id == OWNER_ID,
-        "status": "active" if user_id == OWNER_ID else "inactive",
+        "is_admin": user_admin,
+        "is_premium": user_admin,
+        "status": "active" if user_admin else "inactive",
         "registered_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
     }
     users.append(new_user)
@@ -207,7 +247,7 @@ def toggle_user_status(user_id: int, new_status: Optional[str] = None) -> dict:
     users = load_users()
     for u in users:
         if u.get("id") == user_id:
-            if user_id == OWNER_ID:
+            if is_admin(user_id):
                 u["status"] = "active"
                 u["is_premium"] = True
                 save_users(users)

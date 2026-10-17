@@ -26,9 +26,9 @@
     "first_name": "𝑨𝒇𝒓𝒖𝒛",
     "last_name": "",
     "username": "Afruz0886",
-    "is_admin": false,
-    "is_premium": false,
-    "status": "inactive",
+    "is_admin": true,
+    "is_premium": true,
+    "status": "active",
     "registered_at": "2026-10-17 17:09"
   },
   {

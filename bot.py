@@ -114,7 +114,7 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             return
 
     # 2. Agar foydalanuvchi ADMIN bo'lsa
-    if user_id == OWNER_ID:
+    if db.is_admin(user_id):
         keyboard = [
             [create_web_button("👑 Admin Web Panelni ochish", "/admin")],
             [create_web_button("🍿 Foydalanuvchi Web Katalogi", f"/user?user_id={user_id}")],
@@ -307,7 +307,7 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 # Admin Telegram orqali to'g'ridan-to'g'ri video tashlasa
 async def admin_video_upload_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
-    if user.id != OWNER_ID:
+    if not db.is_admin(user.id):
         return
 
     video = update.message.video or update.message.document
